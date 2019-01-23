@@ -10,6 +10,7 @@ import keras
 import Settings
 import scipy
 from scipy import ndimage
+import matplotlib.pyplot as plt
 
 class NN(object):
     def __init__(self, img_size=50):
@@ -100,3 +101,5 @@ class NN(object):
                 print(str(tmp[0])+"  it's a cat")
             else:
                 print(str(tmp[0])+"  it's a car")
+            plt.imshow(image)
+            plt.show()
