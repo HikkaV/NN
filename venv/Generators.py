@@ -6,8 +6,8 @@ from Settings import *
 import os
 class Generator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, list_IDs, abs_path=path_to_train,  batch_size=batch, dim=(50,50), n_channels=3,
-                 n_classes=classes, shuffle=True):
+    def __init__(self, list_IDs, abs_path=path_to_train,  batch_size=batch, dim=(50,50), n_channels=n_channels,
+                 n_classes=n_classes, shuffle=True):
         'Initialization'
         self.dim = dim
         self.batch_size = batch_size

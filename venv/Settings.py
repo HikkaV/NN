@@ -1,8 +1,12 @@
 path_to_model = '/home/hikkav/environments/my_env/CNNmodel.h5'
 path_to_train = '/home/hikkav/environments/my_env/mytraindata'
 path_to_test = '/home/hikkav/environments/my_env/mytestdata'
-path_for_backup = '/home/hikkav/environments/my_env/BACKUPmodel.h5'
-classes = 2
+path_to_history = '/home/hikkav/environments/my_env/history.json'
+n_classes = 2
+n_channels=3
+input_neurons = 2500
+n_epochs = 20
 batch = 64
+img_size = 50
 last_dropout = 0.5
 kernel_size = (3, 3)

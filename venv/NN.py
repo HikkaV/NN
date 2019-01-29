@@ -12,15 +12,21 @@ from scipy import ndimage
 import matplotlib.pyplot as plt
 from Generators import Generator
 import os
+import json
+import pandas as pd
 
 
 class NN(object):
 
-    def __init__(self, img_size=50):
+    def __init__(self, epochs=n_epochs, steps=batch, dropout=last_dropout, path=path_to_model):
         """
         initialize train and test set and their labels
         :param img_size: the reshaped size of images
         """
+        self.dropout = dropout
+        self.path_to_model = path
+        self.steps = steps
+        self.epochs = epochs
         self.img_size = img_size
 
     def init_nn(self):
@@ -59,15 +65,15 @@ class NN(object):
         model.add(Flatten())
         model.add(Dense(2500))
         model.add(BatchNormalization())
-        model.add(Dropout(last_dropout))
+        model.add(Dropout(self.dropout))
 
         # softmax classifier
-        model.add(Dense(2, activation='softmax'))
+        model.add(Dense(n_classes, activation='softmax'))
         model.compile(optimizer='adam', loss="binary_crossentropy", metrics=['accuracy'])
         # return the constructed network architecture
         return model
 
-    def fit_nn(self, epochs):
+    def fit_nn(self):
         """
         fitting model
         :param epochs: quantity of epochs
@@ -77,24 +83,35 @@ class NN(object):
         model = self.init_nn()
         train_generator = Generator(path_to_train)
         test_generator = Generator(path_to_test, abs_path=path_to_test)
-        callback = keras.callbacks.ModelCheckpoint(path_for_backup, monitor='val_loss', verbose=1, save_best_only=True,
+        callback = keras.callbacks.ModelCheckpoint(self.path_to_model, monitor='val_loss', verbose=1,
+                                                   save_best_only=False,
                                                    save_weights_only=False, mode='min', period=1)
         callback_List = [callback]
-        model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=epochs, verbose=1,
-                            validation_data=test_generator,
-                            shuffle=True, steps_per_epoch=64, initial_epoch=0, use_multiprocessing=True, workers=12)
-        self.model = model
-        if not os.path.exists(path_to_model):
-            self.save_model()
+        history = model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=self.epochs, verbose=1,
+                                      validation_data=test_generator,
+                                      shuffle=True, steps_per_epoch=self.steps, initial_epoch=0,
+                                      use_multiprocessing=True,
+                                      workers=12)
+
+        self.save_history(history)
+
+    def show_stats(self):
+        stats = pd.read_json(path_to_history)
+        print(stats)
 
     def save_model(self):
         """save your model """
         self.model.save(path_to_model)
 
+    def save_history(self, history):
+
+        with open(path_to_history, 'w') as f:
+            json.dump(history.history, f)
+
     def load_model(self):
         """load model if it exists"""
-        if os.path.exists(path_to_model):
-            model = keras.models.load_model(path_to_model)
+        if os.path.exists(self.path_to_model):
+            model = keras.models.load_model(self.path_to_model)
             return model
 
     def predict(self, path):
@@ -107,8 +124,8 @@ class NN(object):
         model = self.load_model()
         if os.path.exists(path):
             image = np.array(ndimage.imread(path, flatten=False))
-            my_image = scipy.misc.imresize(image, size=(self.img_size, self.img_size)).reshape(
-                (1, self.img_size, self.img_size, 3))
+            my_image = scipy.misc.imresize(image, size=(img_size, img_size)).reshape(
+                (1, img_size, img_size, 3))
             tmp = model.predict_classes(my_image)
             if tmp[0] == 1:
                 print(str(tmp[0]) + "  it's a cat")
