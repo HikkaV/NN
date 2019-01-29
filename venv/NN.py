@@ -14,22 +14,24 @@ from Generators import Generator
 import os
 import json
 import pandas as pd
+from skopt import forest_minimize
 
 
 class NN(object):
 
-    def __init__(self, epochs=n_epochs, steps=batch, dropout=last_dropout, path=path_to_model):
+    def __init__(self, epochs=n_epochs, eta=learning_rate, steps=batch, dropout=last_dropout, path=path_to_model):
         """
         initialize train and test set and their labels
         :param img_size: the reshaped size of images
         """
+        self.eta = eta
         self.dropout = dropout
         self.path_to_model = path
         self.steps = steps
         self.epochs = epochs
         self.img_size = img_size
 
-    def init_nn(self):
+    def init_nn(self, lr):
         """
         building the model using keras, making 6 conv2D layers with the same activation function = relu
         the same kernel size =3 , means the quantity of filters
@@ -42,7 +44,7 @@ class NN(object):
 
         model = Sequential()
         model.add(Conv2D(32, kernel_size, padding="same",
-                         input_shape=(self.img_size, self.img_size, 3), activation='relu'))
+                         input_shape=(img_size, img_size, 3), activation='relu'))
         model.add(BatchNormalization(axis=1))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.25))
@@ -65,36 +67,43 @@ class NN(object):
         model.add(Flatten())
         model.add(Dense(2500))
         model.add(BatchNormalization())
-        model.add(Dropout(self.dropout))
+        model.add(Dropout(last_dropout))
 
         # softmax classifier
         model.add(Dense(n_classes, activation='softmax'))
-        model.compile(optimizer='adam', loss="binary_crossentropy", metrics=['accuracy'])
+        adam = keras.optimizers.Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+        model.compile(optimizer=adam, loss="binary_crossentropy", metrics=['accuracy'])
         # return the constructed network architecture
         return model
 
     def fit_nn(self):
+
         """
         fitting model
         :param epochs: quantity of epochs
         :param batch_size: quantity of pics to be educated with per sec
         """
-
-        model = self.init_nn()
+        lr = learning_rate
+        epochs = n_epochs
+        model = NN.init_nn(self, lr)
         train_generator = Generator(path_to_train)
         test_generator = Generator(path_to_test, abs_path=path_to_test)
-        callback = keras.callbacks.ModelCheckpoint(self.path_to_model, monitor='val_loss', verbose=1,
+        callback = keras.callbacks.ModelCheckpoint(path_to_model, monitor='val_loss', verbose=1,
                                                    save_best_only=False,
                                                    save_weights_only=False, mode='min', period=1)
         callback_List = [callback]
-        history = model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=self.epochs, verbose=1,
+        history = model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=epochs, verbose=1,
                                       validation_data=test_generator,
-                                      shuffle=True, steps_per_epoch=self.steps, initial_epoch=0,
+                                      shuffle=True, steps_per_epoch=batch, initial_epoch=0,
                                       use_multiprocessing=True,
                                       workers=12)
 
-        self.save_history(history)
+        NN.save_history(self, history)
 
+    def train_auto(self, random):
+        np.random.RandomState(random)
+        fm = forest_minimize(NN.fit_nn, space['space'], n_calls=n_calls, random_state=random, verbose=True)
+        print (fm)
     def show_stats(self):
         stats = pd.read_json(path_to_history)
         print(stats)
@@ -104,9 +113,13 @@ class NN(object):
         self.model.save(path_to_model)
 
     def save_history(self, history):
-
+        additional_history = {'epochs': n_epochs,
+                              'batch': batch,
+                              'eta': learning_rate
+                              }
+        additional_history.update(history.history)
         with open(path_to_history, 'w') as f:
-            json.dump(history.history, f)
+            json.dump(additional_history, f)
 
     def load_model(self):
         """load model if it exists"""
