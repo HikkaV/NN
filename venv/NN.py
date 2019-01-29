@@ -31,7 +31,7 @@ class NN(object):
         self.epochs = epochs
         self.img_size = img_size
 
-    def init_nn(self, lr):
+    def init_nn(self):
         """
         building the model using keras, making 6 conv2D layers with the same activation function = relu
         the same kernel size =3 , means the quantity of filters
@@ -67,11 +67,11 @@ class NN(object):
         model.add(Flatten())
         model.add(Dense(2500))
         model.add(BatchNormalization())
-        model.add(Dropout(last_dropout))
+        model.add(Dropout(self.dropout))
 
         # softmax classifier
         model.add(Dense(n_classes, activation='softmax'))
-        adam = keras.optimizers.Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+        adam = keras.optimizers.Adam(lr=self.eta, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
         model.compile(optimizer=adam, loss="binary_crossentropy", metrics=['accuracy'])
         # return the constructed network architecture
         return model
@@ -83,27 +83,27 @@ class NN(object):
         :param epochs: quantity of epochs
         :param batch_size: quantity of pics to be educated with per sec
         """
-        lr = learning_rate
-        epochs = n_epochs
-        model = NN.init_nn(self, lr)
+
+        model = self.init_nn()
         train_generator = Generator(path_to_train)
         test_generator = Generator(path_to_test, abs_path=path_to_test)
         callback = keras.callbacks.ModelCheckpoint(path_to_model, monitor='val_loss', verbose=1,
                                                    save_best_only=False,
                                                    save_weights_only=False, mode='min', period=1)
         callback_List = [callback]
-        history = model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=epochs, verbose=1,
+        history = model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=self.epochs, verbose=1,
                                       validation_data=test_generator,
-                                      shuffle=True, steps_per_epoch=batch, initial_epoch=0,
+                                      shuffle=True, steps_per_epoch=self.steps, initial_epoch=0,
                                       use_multiprocessing=True,
                                       workers=12)
 
         NN.save_history(self, history)
 
-    def train_auto(self, random):
-        np.random.RandomState(random)
-        fm = forest_minimize(NN.fit_nn, space['space'], n_calls=n_calls, random_state=random, verbose=True)
-        print (fm)
+    # def train_auto(self, random):
+    #     np.random.RandomState(random)
+    #     fm = forest_minimize(NN.fit_nn, space['space'], n_calls=n_calls, random_state=random, verbose=True)
+    #     print (fm)
+
     def show_stats(self):
         stats = pd.read_json(path_to_history)
         print(stats)
@@ -113,9 +113,9 @@ class NN(object):
         self.model.save(path_to_model)
 
     def save_history(self, history):
-        additional_history = {'epochs': n_epochs,
+        additional_history = {'epochs': self.epochs,
                               'batch': batch,
-                              'eta': learning_rate
+                              'eta': self.eta
                               }
         additional_history.update(history.history)
         with open(path_to_history, 'w') as f:
