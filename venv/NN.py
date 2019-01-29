@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from Generators import Generator
 import os
 
+
 class NN(object):
 
     def __init__(self, img_size=50):
@@ -76,11 +77,12 @@ class NN(object):
         model = self.init_nn()
         train_generator = Generator(path_to_train)
         test_generator = Generator(path_to_test, abs_path=path_to_test)
-        keras.callbacks.ModelCheckpoint(path_for_backup, monitor='val_loss', verbose=0, save_best_only=False,
-                                        save_weights_only=False, mode='auto', period=1)
-
-        model.fit_generator(generator=train_generator, epochs=epochs, verbose=1, validation_data=test_generator,
-                            shuffle = True, steps_per_epoch=64, initial_epoch=0, use_multiprocessing=True, workers=12)
+        callback = keras.callbacks.ModelCheckpoint(path_for_backup, monitor='val_loss', verbose=1, save_best_only=True,
+                                                   save_weights_only=False, mode='min', period=1)
+        callback_List = [callback]
+        model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=epochs, verbose=1,
+                            validation_data=test_generator,
+                            shuffle=True, steps_per_epoch=64, initial_epoch=0, use_multiprocessing=True, workers=12)
         self.model = model
         if not os.path.exists(path_to_model):
             self.save_model()

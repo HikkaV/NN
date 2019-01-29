@@ -48,7 +48,7 @@ class Generator(keras.utils.Sequence):
         resizing each image to a 4dim vector with params (1, 50, 50, 3)
         """
         image = np.array(ndimage.imread(self.abs_path+'/'+path, flatten=False))
-        my_image = scipy.misc.imresize(image, size=(50, 50)).reshape(
+        my_image = scipy.misc.imresize(image, size=self.dim).reshape(
             (1, 50, 50, 3))
         return my_image
 
