@@ -6,7 +6,7 @@ from Settings import *
 import os
 class Generator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, list_IDs, abs_path=path_to_train,  batch_size=batch, dim=(50,50), n_channels=n_channels,
+    def __init__(self, list_IDs, abs_path=path_to_train,  batch_size=batch, dim=(img_size,img_size), n_channels=n_channels,
                  n_classes=n_classes, shuffle=True):
         'Initialization'
         self.dim = dim
@@ -39,17 +39,27 @@ class Generator(keras.utils.Sequence):
         """used to load labels"""
         if path.__contains__('car'):
             label = 0
-        else:
+        elif path.__contains__('dog'):
             label=1
+        else :
+            label=2
+
+
         return label
 
     def preprocess_input(self, path):
         """preprocessing input images from path
         resizing each image to a 4dim vector with params (1, 50, 50, 3)
         """
+        my_image= None
         image = np.array(ndimage.imread(self.abs_path+'/'+path, flatten=False))
-        my_image = scipy.misc.imresize(image, size=self.dim).reshape(
-            (1, 50, 50, 3))
+        try:
+          my_image = scipy.misc.imresize(image, size=self.dim).reshape(
+            (1, img_size, img_size, 3))
+        except Exception as e:
+            print(path, e)
+            os.remove(self.abs_path+"/"+path)
+
         return my_image
 
     def on_epoch_end(self):
@@ -62,7 +72,7 @@ class Generator(keras.utils.Sequence):
         """Generates data containing batch_size samples""" # X : (n_samples, *dim, n_channels)
         # Initialization
         X = np.empty((self.batch_size, *self.dim, self.n_channels))
-        y = np.empty((self.batch_size), dtype=int)
+        y = np.empty(self.batch_size, dtype=int)
 
         # Generate data
         for i, path in enumerate(list_IDs_temp):

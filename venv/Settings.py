@@ -1,18 +1,15 @@
-path_to_model = '/home/hikkav/environments/my_env/CNNmodel.h5'
+path_to_model = '/home/hikkav/environments/my_env/validCNNS/model81.h5'
 path_to_train = '/home/hikkav/environments/my_env/mytraindata'
 path_to_test = '/home/hikkav/environments/my_env/mytestdata'
-path_to_history = '/home/hikkav/environments/my_env/history.json'
+path_to_history = '/home/hikkav/environments/my_env/historyoftraining/history'
+path_to_acrh = '/home/hikkav/environments/my_env/historyoftraining/arch'
 learning_rate = 0.001
-n_classes = 2
-n_channels=3
-input_neurons = 2500
+n_classes = 3
+n_channels = 3
 n_epochs = 1
-batch = 64
-img_size = 50
+batch = 90
+img_size = 100
 last_dropout = 0.5
-kernel_size = (3, 3)
-space = {'space':[  (10**-5, 10.0, 'log-uniform'),#eta
-                     (2, 30) #epochs
-                     ]}
-n_calls=10
-random_state=1
+kernel_size = (6, 6)
+n_calls = 10
+random_state = 1

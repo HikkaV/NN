@@ -14,7 +14,7 @@ from Generators import Generator
 import os
 import json
 import pandas as pd
-from skopt import forest_minimize
+import datetime
 
 
 class NN(object):
@@ -43,36 +43,47 @@ class NN(object):
         """
 
         model = Sequential()
-        model.add(Conv2D(32, kernel_size, padding="same",
+        model.add(Conv2D(64, kernel_size, padding="same",
                          input_shape=(img_size, img_size, 3), activation='relu'))
-        model.add(BatchNormalization(axis=1))
+        model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.25))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
-        model.add(BatchNormalization(axis=1))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
-        model.add(BatchNormalization(axis=1))
+        model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.25))
+        model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
-        model.add(BatchNormalization(axis=1))
-        model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
-        model.add(BatchNormalization(axis=1))
+        model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
+        model.add(Dropout(0.3))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
-        model.add(BatchNormalization(axis=1))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
+        model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
+        model.add(Dropout(0.3))
+        model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Flatten())
-        model.add(Dense(2500))
+        model.add(Dense(10000))
         model.add(BatchNormalization())
         model.add(Dropout(self.dropout))
 
-        # softmax classifier
         model.add(Dense(n_classes, activation='softmax'))
+
         adam = keras.optimizers.Adam(lr=self.eta, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-        model.compile(optimizer=adam, loss="binary_crossentropy", metrics=['accuracy'])
+        model.compile(optimizer=adam, loss="categorical_crossentropy", metrics=['accuracy'])
+        self.score = model.summary()
         # return the constructed network architecture
         return model
 
@@ -87,9 +98,9 @@ class NN(object):
         model = self.init_nn()
         train_generator = Generator(path_to_train)
         test_generator = Generator(path_to_test, abs_path=path_to_test)
-        callback = keras.callbacks.ModelCheckpoint(path_to_model, monitor='val_loss', verbose=1,
+        callback = keras.callbacks.ModelCheckpoint(path_to_model, monitor='val_acc', verbose=1,
                                                    save_best_only=False,
-                                                   save_weights_only=False, mode='min', period=1)
+                                                   save_weights_only=False, mode='max', period=1)
         callback_List = [callback]
         history = model.fit_generator(generator=train_generator, callbacks=callback_List, epochs=self.epochs, verbose=1,
                                       validation_data=test_generator,
@@ -99,50 +110,56 @@ class NN(object):
 
         NN.save_history(self, history)
 
-    # def train_auto(self, random):
-    #     np.random.RandomState(random)
-    #     fm = forest_minimize(NN.fit_nn, space['space'], n_calls=n_calls, random_state=random, verbose=True)
-    #     print (fm)
-
     def show_stats(self):
-        stats = pd.read_json(path_to_history)
+        stats = pd.read_json(self.history_path)
         print(stats)
-
+        # arch = pd.read_json(self.arch_path)
+        # print (arch)
     def save_model(self):
         """save your model """
         self.model.save(path_to_model)
 
     def save_history(self, history):
+        now = datetime.datetime.now()
         additional_history = {'epochs': self.epochs,
                               'batch': batch,
-                              'eta': self.eta
+                              'eta': self.eta,
+                              'kernel_size': kernel_size[0]
+
+
                               }
         additional_history.update(history.history)
-        with open(path_to_history, 'w') as f:
+        self.history_path = history_path = path_to_history + ":" + str(now.year) + ":" + str(now.month) + ":" + str(now.hour) + ":" + str(now.minute) + ".json"
+        with open(history_path, 'w') as f:
             json.dump(additional_history, f)
-
+        # self.arch_path = path_to_acrh+":" + str(now.year) + ":" + str(now.month) + ":" + str(now.hour) + ":" + str(now.minute)+'.json'
+        # with open (self.arch_path, 'w') as v:
+        #      v.write(self.score)
     def load_model(self):
         """load model if it exists"""
         if os.path.exists(self.path_to_model):
             model = keras.models.load_model(self.path_to_model)
             return model
 
-    def predict(self, path):
+    def predict(self, path, model):
         """
         reshapes your input image into the valid format to make prediction
         :param path: path to your pic
         :param model: saved model
         makes a prediction
         """
-        model = self.load_model()
+        model = model
         if os.path.exists(path):
             image = np.array(ndimage.imread(path, flatten=False))
             my_image = scipy.misc.imresize(image, size=(img_size, img_size)).reshape(
                 (1, img_size, img_size, 3))
             tmp = model.predict_classes(my_image)
             if tmp[0] == 1:
-                print(str(tmp[0]) + "  it's a cat")
-            else:
+                print(str(tmp[0]) + "  it's a dog")
+            elif tmp[0] == 0:
                 print(str(tmp[0]) + "  it's a car")
+            elif tmp[0] == 2:
+                print(str(tmp[0]) + " it's a cat")
+
             plt.imshow(image)
             plt.show()
