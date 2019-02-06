@@ -8,4 +8,4 @@ if __name__ == '__main__':
     nn.fit_nn()
     nn.show_stats()
     model = nn.load_model()
-    nn.predict(path='/home/hikkav/environments/my_env/cs.jpg', model=model)
+    nn.predict(model=model)
