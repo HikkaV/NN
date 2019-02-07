@@ -7,15 +7,12 @@ from keras.optimizers import Adam
 import numpy as np
 import keras
 from Settings import *
-import scipy
-from scipy import ndimage
-import matplotlib.pyplot as plt
 import os
 import json
 import pandas as pd
 import datetime
 from keras.preprocessing.image import ImageDataGenerator
-
+from Helper import *
 
 class NN(object):
 
@@ -175,21 +172,6 @@ class NN(object):
             with open(path_to_labels, 'w') as f:
                 json.dump(self.classes, f)
 
-    def make_pics_to_show(self):
-        z = os.listdir(path_to_predict)[0]
-        tmp = os.listdir(path_to_predict + '/' + z)
-        tmp.sort()
-        list_images = [np.array(ndimage.imread(path_to_predict + '/' + z + '/' + b, flatten=False)) for b in tmp]
-        return list_images
-
-    def plot_image(self, images, labels):
-        for i in range(0, len(labels)):
-            ax = plt.subplot(1, 1, 1)
-            plt.axis('off')
-            plt.imshow(images[i])
-            plt.text(0.5, -0.1, labels[i], horizontalalignment='center', verticalalignment='center',
-                     fontsize=15, transform=ax.transAxes)
-            plt.show()
 
     def load_model(self, path=None):
         """load model if it exists"""
@@ -212,4 +194,4 @@ class NN(object):
         pred = model.predict_generator(self.test_generator, verbose=1)
         predicted_class_indices = np.argmax(pred, axis=1)
         predictions = [self.classes[k] for k in predicted_class_indices]
-        self.plot_image(self.make_pics_to_show(), predictions)
+        plot_image(make_pics_to_show(), predictions)
