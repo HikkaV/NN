@@ -3,16 +3,66 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
+from skimage import transform
+import re
 
-def make_pics_to_show():
-    z = os.listdir(path_to_predict)[0]
-    tmp = os.listdir(path_to_predict + '/' + z)
-    tmp.sort()
-    list_images = [np.array(ndimage.imread(path_to_predict + '/' + z + '/' + b, flatten=False)) for b in tmp]
+
+def sorted_alphanumeric(data):
+    """
+    sorts a list in an alphanumeric order
+    :param data: some list to sort
+
+    """
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(data, key=alphanum_key)
+
+
+def make_pics_to_show(path=path_to_predict):
+    """
+    converts images into numpy array to show them using matplotlib lib
+    :param path: path to the folder with images
+    :return:
+    """
+    z = os.listdir(path)[0]
+    tmp = sorted_alphanumeric(os.listdir(path + '/' + z))
+
+    list_images = [np.array(ndimage.imread(path + '/' + z + '/' + b, flatten=False)) for b in tmp]
     return list_images
 
 
-def plot_image(images, labels):
+def make_single_pic_to_show(path):
+    """
+    converts an image into numpy array to show them using matplotlib lib
+    :param path: path to a single img to convert
+
+    """
+    img = np.array(ndimage.imread(path, flatten=False))
+    return img
+
+
+def plot_single_pic(img, label):
+    """
+    shows a single pic with predicted class
+    :param img: the converted img
+    :param label: it's predicted class
+
+    """
+    ax = plt.subplot(1, 1, 1)
+    plt.axis('off')
+    plt.imshow(img)
+    plt.text(0.5, -0.1, label, horizontalalignment='center', verticalalignment='center',
+             fontsize=15, transform=ax.transAxes)
+    plt.show()
+
+
+def plot_images(images, labels):
+    """
+    shows images with predicted classes one by one
+    :param images: the list of converted images
+    :param labels: their predicted classes
+
+    """
     for i in range(0, len(labels)):
         ax = plt.subplot(1, 1, 1)
         plt.axis('off')

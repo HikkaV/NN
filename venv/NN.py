@@ -13,14 +13,18 @@ import pandas as pd
 import datetime
 from keras.preprocessing.image import ImageDataGenerator
 from Helper import *
+from PIL import Image
+
+
+
 
 class NN(object):
 
     def __init__(self, epochs=n_epochs, n_batches=batch, eta=learning_rate, steps=batch, dropout=last_dropout,
                  path=path_to_model):
         """
-        initialize train and test set and their labels
-        :param img_size: the reshaped size of images
+        initialize all necessary params
+
         """
         self.n_batches = n_batches
         self.datagen = ImageDataGenerator(rescale=1. / 255)
@@ -68,8 +72,8 @@ class NN(object):
         the same kernel size =3 , means the quantity of filters
         adding maxpooling with the matrix size 2x2 to boost the speed of fitting and minimize the chance of overfitting
         dense layer is a fully connected layer. dense_1 has  the same neurons as the image  pixels (100x100)
-        the dense_2 layer is an output layer with 2 neurons related to car and cat
-        in compile , using binary_crossentropy as we deal with 2 classes of images
+        the dense_2 layer is an output layer with 3 neurons related to car , cat and dog
+        in compile , using binary_crossentropy as we deal with 3 classes of images
         :return: returns a made model
         """
 
@@ -144,6 +148,11 @@ class NN(object):
         NN.save_history(self, history, model)
 
     def show_stats(self):
+        """
+        prints results of training per epoch
+        from json file using pandas lib
+
+        """
         stats = pd.read_json(self.history_path)
         print(stats)
 
@@ -152,6 +161,12 @@ class NN(object):
         self.model.save(self.abs_model_path)
 
     def save_history(self, history, model):
+        """
+        saves history of training and other features to json file
+        :param history: history of training
+        :param model: saved model
+        :return:
+        """
         data = model.to_json()
         self.model_arch = 'model' + self.date + ".json"
         with open(self.model_arch, 'w') as z:
@@ -168,10 +183,13 @@ class NN(object):
             json.dump(additional_history, f)
 
     def save_dict(self):
+        """
+
+        saves a dict with a labels to json file
+        """
         if not os.path.exists(path_to_labels):
             with open(path_to_labels, 'w') as f:
                 json.dump(self.classes, f)
-
 
     def load_model(self, path=None):
         """load model if it exists"""
@@ -181,13 +199,29 @@ class NN(object):
             model = keras.models.load_model(path)
             return model
 
-    def predict(self, model):
+    def predict_on_single_image(self, filename, model):
+        '''
+        predicts a class of a single input image
+        :param filename: path to the pic to predict
+        :param model: saved model
+
+        '''
+        model = model
+        np_image = Image.open(filename)
+        np_image = np.array(np_image).astype('float32') / 255
+        np_image = transform.resize(np_image, (img_size, img_size, n_classes))
+        np_image = np.expand_dims(np_image, axis=0)
+        tmp = model.predict(np_image)
+        prediction = np.argmax(tmp, axis=1)
+        pred = self.classes[prediction[0]]
+        plot_single_pic(make_single_pic_to_show(filename), pred)
+
+    def predict_pics(self, model):
 
         """
         reshapes your input image into the valid format to make prediction
-        :param path: path to your pic
         :param model: saved model
-        makes a prediction
+        makes a prediction on a list of files in some folder
         """
         model = model
         self.test_generator.reset()
