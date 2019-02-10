@@ -12,35 +12,44 @@ import json
 import pandas as pd
 import datetime
 from keras.preprocessing.image import ImageDataGenerator
-from Helper import *
 from PIL import Image
-
-
+from skimage import transform
+import Helper
 
 
 class NN(object):
 
-    def __init__(self, epochs=n_epochs, n_batches=batch, eta=learning_rate, steps=batch, dropout=last_dropout,
+    def __init__(self, epochs=n_epochs, train_batches=batch, val_batch=val_steps, crossval_batches=crossval_batch,
+                 eta=learning_rate,  dropout=last_dropout,
                  path=path_to_model):
         """
         initialize all necessary params
 
         """
-        self.n_batches = n_batches
+        self.train_batch=train_batches
+        self.val__batch=val_batch
         self.datagen = ImageDataGenerator(rescale=1. / 255)
         self.validation_generator = self.datagen.flow_from_directory(directory=path_to_test,
                                                                      target_size=dim, color_mode='rgb',
-                                                                     batch_size=n_batches,
+                                                                     batch_size=train_batches,
                                                                      class_mode='categorical',
                                                                      shuffle=True,
                                                                      seed=random_state)
         self.train_generator = self.datagen.flow_from_directory(directory=path_to_train,
                                                                 target_size=dim, color_mode='rgb',
-                                                                batch_size=n_batches,
+                                                                batch_size=val_batch,
                                                                 class_mode='categorical',
                                                                 shuffle=True,
                                                                 seed=random_state)
-
+        self.crossval_generator = self.datagen.flow_from_directory(
+            directory=path_to_crossval,
+            target_size=(img_size, img_size),
+            color_mode="rgb",
+            batch_size=crossval_batches,
+            class_mode='categorical',
+            shuffle=True,
+            seed=random_state
+        )
         self.test_generator = self.datagen.flow_from_directory(
             directory=path_to_predict,
             target_size=(img_size, img_size),
@@ -56,7 +65,6 @@ class NN(object):
         self.eta = eta
         self.dropout = dropout
         self.path_to_model = path
-        self.steps = steps
         self.epochs = epochs
         self.img_size = img_size
         self.now = datetime.datetime.now()
@@ -88,18 +96,18 @@ class NN(object):
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.4))
+        model.add(Dropout(0.25))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
@@ -109,7 +117,7 @@ class NN(object):
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
-        model.add(Dropout(0.4))
+        model.add(Dropout(0.5))
         model.add(Flatten())
         model.add(Dense(dense_layer))
         model.add(BatchNormalization())
@@ -122,7 +130,7 @@ class NN(object):
         # return the constructed network architecture
         return model
 
-    def fit_nn(self):
+    def fit_nn(self, args):
 
         """
         fitting model
@@ -140,13 +148,20 @@ class NN(object):
         history = model.fit_generator(generator=self.train_generator, callbacks=callback_List, epochs=self.epochs,
                                       verbose=1,
                                       validation_data=self.validation_generator,
-                                      validation_steps=val_steps,
-                                      shuffle=True, steps_per_epoch=self.steps, initial_epoch=0,
+                                      validation_steps=self.val__batch,
+                                      shuffle=True, steps_per_epoch=self.train_batch, initial_epoch=0,
                                       use_multiprocessing=True,
                                       workers=12)
 
         NN.save_history(self, history, model)
+        if args.condtion:
+            self.show_stats()
 
+    def evaluate(self, args):
+        model = self.load_model(args.path)
+        score = model.evaluate_generator(self.crossval_generator, steps=crossval_batch, max_queue_size=10, workers=10,
+                                 use_multiprocessing=True)
+        print ('acc : '+str(score[1]))
     def show_stats(self):
         """
         prints results of training per epoch
@@ -191,7 +206,7 @@ class NN(object):
             with open(path_to_labels, 'w') as f:
                 json.dump(self.classes, f)
 
-    def load_model(self, path=None):
+    def load_model(self, path):
         """load model if it exists"""
         if self.abs_model_path is not None:
             path = self.abs_model_path
@@ -199,33 +214,35 @@ class NN(object):
             model = keras.models.load_model(path)
             return model
 
-    def predict_on_single_image(self, filename, model):
+    def predict_on_single_image(self, args):
+
         '''
         predicts a class of a single input image
         :param filename: path to the pic to predict
         :param model: saved model
 
         '''
-        model = model
-        np_image = Image.open(filename)
+        model = self.load_model(args.path)
+        np_image = Image.open(args.filename)
         np_image = np.array(np_image).astype('float32') / 255
         np_image = transform.resize(np_image, (img_size, img_size, n_classes))
         np_image = np.expand_dims(np_image, axis=0)
         tmp = model.predict(np_image)
+        print(tmp)
         prediction = np.argmax(tmp, axis=1)
         pred = self.classes[prediction[0]]
-        plot_single_pic(make_single_pic_to_show(filename), pred)
+        Helper.plot_single_pic(Helper.make_single_pic_to_show(args.filename), pred)
 
-    def predict_pics(self, model):
+    def predict_pics(self):
 
         """
         reshapes your input image into the valid format to make prediction
         :param model: saved model
         makes a prediction on a list of files in some folder
         """
-        model = model
+        model = self.model
         self.test_generator.reset()
         pred = model.predict_generator(self.test_generator, verbose=1)
         predicted_class_indices = np.argmax(pred, axis=1)
         predictions = [self.classes[k] for k in predicted_class_indices]
-        plot_image(make_pics_to_show(), predictions)
+        Helper.plot_images(Helper.make_pics_to_show(), predictions)

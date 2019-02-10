@@ -5,6 +5,34 @@ import numpy as np
 from scipy import ndimage
 from skimage import transform
 import re
+import argparse
+import NN
+from NN import NN
+
+ap = argparse.ArgumentParser()
+nn = NN()
+
+
+def parse_args():
+    subparsers = ap.add_subparsers()
+    fit_parser = subparsers.add_parser('fit_nn', help='fit your neural network')
+    fit_parser.add_argument('-c', dest='condition', help='the argument which is responsible for saving the history of '
+                                                         'training', required=True, type=bool)
+    fit_parser.set_defaults(func=nn.fit_nn)
+
+    predict_on_single_parser = subparsers.add_parser('predict_on_single_image',
+                                                     help='get a prediction for a single img')
+    predict_on_single_parser.add_argument('-p', dest='filename', required=True, type=str, help='path to pic for making '
+                                                                                               ' a prediction ')
+    predict_on_single_parser.add_argument('-w', dest='path',
+                                          help='path to trained model', required=False, type=str,
+                                          default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
+    predict_on_single_parser.set_defaults(func=nn.predict_on_single_image)
+    evaluate = subparsers.add_parser('evaluate', help='evaluate your model using cross validation')
+    evaluate.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
+                          default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
+    evaluate.set_defaults(func=nn.evaluate)
+    return ap.parse_args()
 
 
 def sorted_alphanumeric(data):
@@ -33,7 +61,7 @@ def make_pics_to_show(path=path_to_predict):
 
 def make_single_pic_to_show(path):
     """
-    converts an image into numpy array to show them using matplotlib lib
+    converts an image into numpy array to show it using matplotlib lib
     :param path: path to a single img to convert
 
     """
