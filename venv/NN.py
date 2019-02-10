@@ -90,7 +90,7 @@ class NN(object):
                          input_shape=(img_size, img_size, 3), activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
+        model.add(Dropout(0.3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
@@ -101,13 +101,13 @@ class NN(object):
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
+        model.add(Dropout(0.3))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
+        model.add(Dropout(0.4))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
@@ -117,7 +117,7 @@ class NN(object):
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.6))
         model.add(Flatten())
         model.add(Dense(dense_layer))
         model.add(BatchNormalization())
@@ -134,8 +134,7 @@ class NN(object):
 
         """
         fitting model
-        :param epochs: quantity of epochs
-        :param batch_size: quantity of pics to be educated with per sec
+
         """
 
         model = self.init_nn()
@@ -218,7 +217,7 @@ class NN(object):
 
         '''
         predicts a class of a single input image
-        :param filename: path to the pic to predict
+        :param args.filename: path to the pic to predict
         :param model: saved model
 
         '''
@@ -233,14 +232,14 @@ class NN(object):
         pred = self.classes[prediction[0]]
         Helper.plot_single_pic(Helper.make_single_pic_to_show(args.filename), pred)
 
-    def predict_pics(self):
+    def predict_pics(self, args):
 
         """
         reshapes your input image into the valid format to make prediction
         :param model: saved model
         makes a prediction on a list of files in some folder
         """
-        model = self.model
+        model = self.load_model(args.path)
         self.test_generator.reset()
         pred = model.predict_generator(self.test_generator, verbose=1)
         predicted_class_indices = np.argmax(pred, axis=1)

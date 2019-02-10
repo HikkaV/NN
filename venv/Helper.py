@@ -32,6 +32,11 @@ def parse_args():
     evaluate.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
                           default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
     evaluate.set_defaults(func=nn.evaluate)
+    predict_on_multi_images = subparsers.add_parser('predict_on_multi_images', help='make predictions for more than '
+                                                                                    'one img ')
+    predict_on_multi_images.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
+                                         default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
+    predict_on_multi_images.set_defaults(func=nn.predict_pics)
     return ap.parse_args()
 
 
