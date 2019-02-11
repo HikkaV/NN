@@ -1,4 +1,4 @@
-from Settings import *
+from settings import *
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,11 +6,11 @@ from scipy import ndimage
 from skimage import transform
 import re
 import argparse
-import NN
-from NN import NN
+import nn
+from nn import NN
 
 ap = argparse.ArgumentParser()
-nn = NN()
+neuraln = NN()
 
 
 def parse_args():
@@ -18,7 +18,7 @@ def parse_args():
     fit_parser = subparsers.add_parser('fit_nn', help='fit your neural network')
     fit_parser.add_argument('-c', dest='condition', help='the argument which is responsible for saving the history of '
                                                          'training', required=True, type=bool)
-    fit_parser.set_defaults(func=nn.fit_nn)
+    fit_parser.set_defaults(func=neuraln.fit_nn)
 
     predict_on_single_parser = subparsers.add_parser('predict_on_single_image',
                                                      help='get a prediction for a single img')
@@ -27,16 +27,16 @@ def parse_args():
     predict_on_single_parser.add_argument('-w', dest='path',
                                           help='path to trained model', required=False, type=str,
                                           default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
-    predict_on_single_parser.set_defaults(func=nn.predict_on_single_image)
+    predict_on_single_parser.set_defaults(func=neuraln.predict_on_single_image)
     evaluate = subparsers.add_parser('evaluate', help='evaluate your model using cross validation')
     evaluate.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
                           default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
-    evaluate.set_defaults(func=nn.evaluate)
+    evaluate.set_defaults(func=neuraln.evaluate)
     predict_on_multi_images = subparsers.add_parser('predict_on_multi_images', help='make predictions for more than '
                                                                                     'one img ')
     predict_on_multi_images.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
                                          default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
-    predict_on_multi_images.set_defaults(func=nn.predict_pics)
+    predict_on_multi_images.set_defaults(func=neuraln.predict_pics)
     return ap.parse_args()
 
 

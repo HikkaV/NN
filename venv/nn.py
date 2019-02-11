@@ -6,7 +6,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 import numpy as np
 import keras
-from Settings import *
+from settings import *
 import os
 import json
 import pandas as pd
@@ -14,30 +14,30 @@ import datetime
 from keras.preprocessing.image import ImageDataGenerator
 from PIL import Image
 from skimage import transform
-import Helper
+import helper
 
 
 class NN(object):
 
     def __init__(self, epochs=n_epochs, train_batches=batch, val_batch=val_steps, crossval_batches=crossval_batch,
-                 eta=learning_rate,  dropout=last_dropout,
+                 eta=learning_rate, dropout=last_dropout,
                  path=path_to_model):
         """
         initialize all necessary params
 
         """
-        self.train_batch=train_batches
-        self.val__batch=val_batch
+        self.train_batch = train_batches
+        self.val__batch = val_batch
         self.datagen = ImageDataGenerator(rescale=1. / 255)
         self.validation_generator = self.datagen.flow_from_directory(directory=path_to_test,
                                                                      target_size=dim, color_mode='rgb',
-                                                                     batch_size=train_batches,
+                                                                     batch_size=self.val__batch,
                                                                      class_mode='categorical',
                                                                      shuffle=True,
                                                                      seed=random_state)
         self.train_generator = self.datagen.flow_from_directory(directory=path_to_train,
                                                                 target_size=dim, color_mode='rgb',
-                                                                batch_size=val_batch,
+                                                                batch_size=self.train_batch,
                                                                 class_mode='categorical',
                                                                 shuffle=True,
                                                                 seed=random_state)
@@ -71,8 +71,8 @@ class NN(object):
         self.abs_model_path = None
         self.model_arch = None
         self.history_path = None
-        self.date = ":" + str(self.now.year) + ":" + str(self.now.month) + ":" + str(
-            self.now.hour) + ":" + str(self.now.day) + ':' + str(self.now.minute)
+        self.date = "." + str(self.now.year) + "-" + str(self.now.month) + "-" + str(self.now.day) + "_" + str(
+            self.now.hour) + '-' + str(self.now.minute)
 
     def init_nn(self):
         """
@@ -91,11 +91,16 @@ class NN(object):
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.3))
+        model.add(Conv2D(32, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
+        model.add(Conv2D(32, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
@@ -107,7 +112,6 @@ class NN(object):
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.4))
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
@@ -117,7 +121,8 @@ class NN(object):
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
-        model.add(Dropout(0.6))
+        model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
+        model.add(Dropout(0.4))
         model.add(Flatten())
         model.add(Dense(dense_layer))
         model.add(BatchNormalization())
@@ -153,14 +158,15 @@ class NN(object):
                                       workers=12)
 
         NN.save_history(self, history, model)
-        if args.condtion:
+        if args.condition:
             self.show_stats()
 
     def evaluate(self, args):
         model = self.load_model(args.path)
         score = model.evaluate_generator(self.crossval_generator, steps=crossval_batch, max_queue_size=10, workers=10,
-                                 use_multiprocessing=True)
-        print ('acc : '+str(score[1]))
+                                         use_multiprocessing=False)
+        print ('acc : ' + str(score[1]))
+
     def show_stats(self):
         """
         prints results of training per epoch
@@ -230,7 +236,7 @@ class NN(object):
         print(tmp)
         prediction = np.argmax(tmp, axis=1)
         pred = self.classes[prediction[0]]
-        Helper.plot_single_pic(Helper.make_single_pic_to_show(args.filename), pred)
+        helper.plot_single_pic(helper.make_single_pic_to_show(args.filename), pred)
 
     def predict_pics(self, args):
 
@@ -242,6 +248,7 @@ class NN(object):
         model = self.load_model(args.path)
         self.test_generator.reset()
         pred = model.predict_generator(self.test_generator, verbose=1)
+        print(pred)
         predicted_class_indices = np.argmax(pred, axis=1)
         predictions = [self.classes[k] for k in predicted_class_indices]
-        Helper.plot_images(Helper.make_pics_to_show(), predictions)
+        helper.plot_images(helper.make_pics_to_show(), predictions)

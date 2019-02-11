@@ -3,7 +3,7 @@
 import os
 import argparse
 import sys
-from Helper import *
+from helper import *
 
 
 if __name__ == '__main__':
