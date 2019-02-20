@@ -17,5 +17,5 @@ crossval_batch = 30
 img_size = 100
 dim = (img_size, img_size)
 last_dropout = 0.6
-kernel_size = (3, 3)
+kernel_size = (5, 5)
 random_state = 10

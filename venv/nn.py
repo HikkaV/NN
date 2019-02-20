@@ -178,8 +178,8 @@ class NN(object):
 
     def save_model(self):
         """save your model """
-        self.model.save(self.abs_model_path)
 
+        self.model.save_weights(self.abs_model_path)
     def save_history(self, history, model):
         """
         saves history of training and other features to json file
@@ -216,7 +216,7 @@ class NN(object):
         if self.abs_model_path is not None:
             path = self.abs_model_path
         if os.path.exists(path):
-            model = keras.models.load_model(path)
+            model = keras.models.load_weights(path)
             return model
 
     def predict_on_single_image(self, args):
@@ -248,7 +248,6 @@ class NN(object):
         model = self.load_model(args.path)
         self.test_generator.reset()
         pred = model.predict_generator(self.test_generator, verbose=1)
-        print(pred)
         predicted_class_indices = np.argmax(pred, axis=1)
         predictions = [self.classes[k] for k in predicted_class_indices]
         helper.plot_images(helper.make_pics_to_show(), predictions)
