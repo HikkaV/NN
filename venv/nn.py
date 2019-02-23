@@ -204,7 +204,6 @@ class NN(object):
 
     def save_dict(self):
         """
-
         saves a dict with a labels to json file
         """
         if not os.path.exists(path_to_labels):
