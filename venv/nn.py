@@ -216,7 +216,7 @@ class NN(object):
         if self.abs_model_path is not None:
             path = self.abs_model_path
         if os.path.exists(path):
-            model = keras.models.load_weights(path)
+            model = keras.models.load_model(path)
             return model
 
     def predict_on_single_image(self, args):
