@@ -76,13 +76,7 @@ class NN(object):
 
     def init_nn(self):
         """
-        building the model using keras, making 6 conv2D layers with the same activation function = relu
-        the same kernel size =3 , means the quantity of filters
-        adding maxpooling with the matrix size 2x2 to boost the speed of fitting and minimize the chance of overfitting
-        dense layer is a fully connected layer. dense_1 has  the same neurons as the image  pixels (100x100)
-        the dense_2 layer is an output layer with 3 neurons related to car , cat and dog
-        in compile , using binary_crossentropy as we deal with 3 classes of images
-        :return: returns a made model
+        building the model using keras
         """
 
         model = Sequential()
@@ -90,20 +84,22 @@ class NN(object):
                          input_shape=(img_size, img_size, 3), activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.3))
+        model.add(Dropout(0.2))
         model.add(Conv2D(32, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(32, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
+        model.add(Conv2D(32, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
+        model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.3))
-        model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
-        model.add(BatchNormalization(axis=3))
-        model.add(Conv2D(64, kernel_size, padding="same", activation='relu'))
+        model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.3))
@@ -115,16 +111,21 @@ class NN(object):
         model.add(Conv2D(128, kernel_size, padding="same", activation='relu'))
         model.add(BatchNormalization(axis=3))
         model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(256, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Conv2D(512, kernel_size, padding="same", activation='relu'))
+        model.add(BatchNormalization(axis=3))
         model.add(Dropout(0.4))
         model.add(Flatten())
-        model.add(Dense(dense_layer))
+        model.add(Dense(dense_layer, activation='relu'))
         model.add(BatchNormalization())
         model.add(Dropout(self.dropout))
 
