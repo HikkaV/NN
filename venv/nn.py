@@ -30,11 +30,11 @@ class NN(object):
         self.val__batch = val_batch
         self.datagen = ImageDataGenerator(rescale=1. / 255)
         self.validation_generator = self.datagen.flow_from_directory(directory=path_to_test,
-                                                                     target_size=dim, color_mode='rgb',
-                                                                     batch_size=self.val__batch,
-                                                                     class_mode='categorical',
-                                                                     shuffle=True,
-                                                                     seed=random_state)
+                                                                      target_size=dim, color_mode='rgb',
+                                                                      batch_size=self.val__batch,
+                                                                      class_mode='categorical',
+                                                                       shuffle=True,
+                                                                      seed=random_state)
         self.train_generator = self.datagen.flow_from_directory(directory=path_to_train,
                                                                 target_size=dim, color_mode='rgb',
                                                                 batch_size=self.train_batch,
@@ -42,24 +42,16 @@ class NN(object):
                                                                 shuffle=True,
                                                                 seed=random_state)
         self.crossval_generator = self.datagen.flow_from_directory(
-            directory=path_to_crossval,
-            target_size=(img_size, img_size),
-            color_mode="rgb",
-            batch_size=crossval_batches,
-            class_mode='categorical',
-            shuffle=True,
-            seed=random_state
-        )
-        self.test_generator = self.datagen.flow_from_directory(
-            directory=path_to_predict,
-            target_size=(img_size, img_size),
-            color_mode="rgb",
-            batch_size=1,
-            class_mode=None,
-            shuffle=False,
-            seed=random_state
-        )
-        self.classes = self.validation_generator.class_indices
+             directory=path_to_crossval,
+             target_size=(img_size, img_size),
+             color_mode="rgb",
+             batch_size=crossval_batches,
+             class_mode='categorical',
+             shuffle=True,
+             seed=random_state
+         )
+
+        self.classes = self.train_generator.class_indices
         self.classes = dict((v, k) for k, v in self.classes.items())
         self.save_dict()
         self.eta = eta
@@ -78,7 +70,6 @@ class NN(object):
         """
         building the model using keras
         """
-
         model = Sequential()
         model.add(Conv2D(32, kernel_size, padding="same",
                          input_shape=(img_size, img_size, 3), activation='relu'))
@@ -125,7 +116,8 @@ class NN(object):
         model.add(BatchNormalization(axis=3))
         model.add(Dropout(0.4))
         model.add(Flatten())
-        model.add(Dense(dense_layer, activation='relu'))
+        model.add(Dense(dense_layer1, activation='relu'))
+        model.add(Dense(dense_layer2, activation='relu'))
         model.add(BatchNormalization())
         model.add(Dropout(self.dropout))
 
@@ -151,9 +143,8 @@ class NN(object):
                                                    save_weights_only=False, mode='max', period=1)
         callback_List = [callback]
         history = model.fit_generator(generator=self.train_generator, callbacks=callback_List, epochs=self.epochs,
+                                      validation_data = self.validation_generator, validation_steps=self.val__batch,
                                       verbose=1,
-                                      validation_data=self.validation_generator,
-                                      validation_steps=self.val__batch,
                                       shuffle=True, steps_per_epoch=self.train_batch, initial_epoch=0,
                                       use_multiprocessing=True,
                                       workers=12)
@@ -181,6 +172,7 @@ class NN(object):
         """save your model """
 
         self.model.save_weights(self.abs_model_path)
+
     def save_history(self, history, model):
         """
         saves history of training and other features to json file
@@ -238,16 +230,4 @@ class NN(object):
         pred = self.classes[prediction[0]]
         helper.plot_single_pic(helper.make_single_pic_to_show(args.filename), pred)
 
-    def predict_pics(self, args):
 
-        """
-        reshapes your input image into the valid format to make prediction
-        :param model: saved model
-        makes a prediction on a list of files in some folder
-        """
-        model = self.load_model(args.path)
-        self.test_generator.reset()
-        pred = model.predict_generator(self.test_generator, verbose=1)
-        predicted_class_indices = np.argmax(pred, axis=1)
-        predictions = [self.classes[k] for k in predicted_class_indices]
-        helper.plot_images(helper.make_pics_to_show(), predictions)

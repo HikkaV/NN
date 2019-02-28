@@ -32,11 +32,6 @@ def parse_args():
     evaluate.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
                           default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
     evaluate.set_defaults(func=neuraln.evaluate)
-    predict_on_multi_images = subparsers.add_parser('predict_on_multi_images', help='make predictions for more than '
-                                                                                    'one img ')
-    predict_on_multi_images.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
-                                         default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
-    predict_on_multi_images.set_defaults(func=neuraln.predict_pics)
     return ap.parse_args()
 
 
@@ -49,19 +44,6 @@ def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(data, key=alphanum_key)
-
-
-def make_pics_to_show(path=path_to_predict):
-    """
-    converts images into numpy array to show them using matplotlib lib
-    :param path: path to the folder with images
-    :return:
-    """
-    z = os.listdir(path)[0]
-    tmp = sorted_alphanumeric(os.listdir(path + '/' + z))
-
-    list_images = [np.array(ndimage.imread(path + '/' + z + '/' + b, flatten=False)) for b in tmp]
-    return list_images
 
 
 def make_single_pic_to_show(path):
@@ -89,17 +71,3 @@ def plot_single_pic(img, label):
     plt.show()
 
 
-def plot_images(images, labels):
-    """
-    shows images with predicted classes one by one
-    :param images: the list of converted images
-    :param labels: their predicted classes
-
-    """
-    for i in range(0, len(labels)):
-        ax = plt.subplot(1, 1, 1)
-        plt.axis('off')
-        plt.imshow(images[i])
-        plt.text(0.5, -0.1, labels[i], horizontalalignment='center', verticalalignment='center',
-                 fontsize=15, transform=ax.transAxes)
-        plt.show()
