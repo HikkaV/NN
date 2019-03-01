@@ -148,9 +148,8 @@ class NN(object):
                                       shuffle=True, steps_per_epoch=self.train_batch, initial_epoch=0,
                                       use_multiprocessing=True,
                                       workers=12)
-
-        NN.save_history(self, history, model)
         if args.condition:
+            NN.save_history(self, history, model)
             self.show_stats()
 
     def evaluate(self, args):
