@@ -30,7 +30,7 @@ def parse_args():
     predict_on_single_parser.set_defaults(func=neuraln.predict_on_single_image)
     evaluate = subparsers.add_parser('evaluate', help='evaluate your model using cross validation')
     evaluate.add_argument('-p', dest='path', help='path to trained model ', required=False, type=str,
-                          default='/home/hikkav/environments/my_env/validCNNS/the _best_MODEL.h5')
+                          default='/home/hikkav/environments/my_env/IntestinesNNProjects/biasesAndWeights/model.2019-2-28_23-46.h5')
     evaluate.set_defaults(func=neuraln.evaluate)
     return ap.parse_args()
 
