@@ -230,7 +230,7 @@ class NN(object):
         model = self.load_model(args.path)
         np_image = Image.open(args.filename)
         np_image = np.array(np_image).astype('float32') / 255
-        np_image = transform.resize(np_image, (img_size, img_size, n_classes))
+        np_image = transform.resize(np_image, (img_size, img_size, n_channels))
         np_image = np.expand_dims(np_image, axis=0)
         tmp = model.predict(np_image)
         print(tmp)
