@@ -158,8 +158,9 @@ class NN(object):
                                       use_multiprocessing=True,
                                       workers=12)
 
-        NN.save_history(self, history, model)
+      
         if args.condition:
+            NN.save_history(self, history, model)
             self.show_stats()
 
     def evaluate(self, args):
