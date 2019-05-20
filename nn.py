@@ -148,7 +148,7 @@ class NN(object):
                                       validation_data = self.validation_generator, validation_steps=self.val__batch,
                                       verbose=1,
                                       shuffle=True, steps_per_epoch=self.train_batch, initial_epoch=0,
-                                      use_multiprocessing=True,
+                                      use_multiprocessing=False,
                                       workers=12)
         if args.condition:
             NN.save_history(self, history, model)

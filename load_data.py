@@ -3,7 +3,7 @@ from settings import *
 import zipfile
 import os
 import shutil
-
+import time
 
 def make_directory():
     if not os.path.exists(path_to_extracted):
@@ -16,6 +16,12 @@ def load_data():
 
     wget.download(path_to_online_data)
 
+def make_crossval():
+    for i in os.listdir('train'):
+        for z,v in enumerate(os.listdir(os.path.join('train',i))):
+            if z==500:
+                break
+            shutil.move(os.path.join('train',i,v),os.path.join('crossval',i))
 
 def divide_data():
     os.mkdir(path_to_train)
@@ -28,28 +34,23 @@ def divide_data():
                 for v in os.listdir(os.path.join(tmp, i, z)):
                     if not os.path.exists(os.path.join(path_to_train, v)):
                         os.mkdir(os.path.join(path_to_train, v))
-                    for m in os.listdir(os.path.join(tmp, i, z, v)):
-                        shutil.move(os.path.join(tmp, i, z, v, m), os.path.join(path_to_train, v))
+                        os.mkdir(os.path.join(path_to_crossval, v))
+                    for f,m in enumerate(os.listdir(os.path.join(tmp, i, z, v))):
+                         if f>=8500:
+                           shutil.copy(os.path.join(tmp, i, z, v, m), os.path.join(path_to_crossval, v))
+                         else:
+                           shutil.copy(os.path.join(tmp, i, z, v, m), os.path.join(path_to_train, v))
+                       
             else:
                 for v in os.listdir(os.path.join(tmp, i, z)):
                     if not os.path.exists(os.path.join(path_to_test, v)):
                         os.mkdir(os.path.join(path_to_test, v))
-                        os.mkdir(os.path.join(path_to_crossval, v))
+                        
                     for m in os.listdir(os.path.join(tmp, i, z, v)):
-                        shutil.move(os.path.join(tmp, i, z, v, m), os.path.join(path_to_crossval, v))
+                        shutil.copy(os.path.join(tmp, i, z, v, m), os.path.join(path_to_test, v))
     print('Done with test and train folders')
-
-    for i in os.listdir('train'):
-
-        for _, v in enumerate(os.listdir(os.path.join('train', i))):
-            if _ == len(os.listdir(os.path.join('train', i))) * 0.01:
-                print('Done with crossval/{}.'.format(i))
-
-                break
-            shutil.move(os.path.join('train', i, v), os.path.join(path_to_test, i))
-
-    print('Finished with all preparations')
-
+    
+   
 
 def extract__data():
     if not os.path.exists('train') or not os.path.exists('test') or not os.path.exists('crossval'):
@@ -62,9 +63,10 @@ def extract__data():
             os.remove('kvasir-dataset-v2-folds.zip')
         print("Loaded and extracted data,  dividing it into related groups")
         divide_data()
+        make_crossval()
         shutil.rmtree('data')
     else:
         print('Found all the mandatory folders')
 
 if __name__ == '__main__':
-    extract__data()
+   extract__data()
