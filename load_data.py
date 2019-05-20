@@ -36,10 +36,9 @@ def divide_data():
                         os.mkdir(os.path.join(path_to_train, v))
                         os.mkdir(os.path.join(path_to_crossval, v))
                     for f,m in enumerate(os.listdir(os.path.join(tmp, i, z, v))):
-                         if f>=8500:
-                           shutil.copy(os.path.join(tmp, i, z, v, m), os.path.join(path_to_crossval, v))
-                         else:
-                           shutil.copy(os.path.join(tmp, i, z, v, m), os.path.join(path_to_train, v))
+
+
+                        shutil.copy(os.path.join(tmp, i, z, v, m), os.path.join(path_to_train, v))
                        
             else:
                 for v in os.listdir(os.path.join(tmp, i, z)):
