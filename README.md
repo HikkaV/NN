@@ -6,4 +6,4 @@ How to use :
 3.Move to repository's folder using 'cd' command
 4. pip install -r req.txt
 5. python main.py -h (to get to know available commands)
-The dataset will be downloaded and extracted automaticaly.
+The dataset will be downloaded and extracted automatically.
