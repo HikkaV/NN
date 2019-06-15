@@ -1,3 +1,5 @@
+from math import ceil
+
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dropout, BatchNormalization
 from keras.layers.core import Activation
@@ -145,9 +147,9 @@ class NN(object):
                                                    save_weights_only=False, mode='max', period=1)
         callback_List = [callback]
         history = model.fit_generator(generator=self.train_generator, callbacks=callback_List, epochs=self.epochs,
-                                      validation_data = self.validation_generator, validation_steps=self.val__batch,
+                                      validation_data = self.validation_generator, validation_steps=ceil(self.validation_generator.samples / self.val__batch),
                                       verbose=1,
-                                      shuffle=True, steps_per_epoch=self.train_batch, initial_epoch=0,
+                                      shuffle=True, steps_per_epoch=ceil(self.train_generator.samples / self.train_batch), initial_epoch=0,
                                       use_multiprocessing=False,
                                       workers=12)
         if args.condition:
